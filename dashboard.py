@@ -24,24 +24,21 @@ chart_data['day'] = chart_data['time'].dt.date  # Add a column for the day
 # Sidebar for selecting the time unit
 st.sidebar.header("Settings")
 
-# Text input for filtering domain_name
-domain_filter = st.sidebar.text_input(
-    "Filter Domain(s)",
-    value="",  # Default value is an empty string
-    placeholder="Enter domain to filter"
-)
-
 # Get unique domains
 all_domains = chart_data['domain_name'].unique()
 
-# Filter domains based on the text input
-if domain_filter:
-    filtered_domains = [d for d in all_domains if domain_filter.lower() in d.lower()]
-else:
-    filtered_domains = all_domains
+# Auto-complete for domain_name
+domain_filter = st.sidebar.selectbox(
+    "Select Domain(s)",
+    options=['All'] + list(all_domains),
+    index=0
+)
 
-# Filter data based on filtered domains
-filtered_data = chart_data[chart_data['domain_name'].isin(filtered_domains)]
+# Filter domains based on the selected value
+if domain_filter == 'All':
+    filtered_data = chart_data
+else:
+    filtered_data = chart_data[chart_data['domain_name'] == domain_filter]
 
 # Sidebar for selecting the time unit
 unit = st.sidebar.radio(
