@@ -13,7 +13,6 @@ import load_data as df
 chart_data = df.df
 
 
-
 # Convert the 'time' column to datetime format if it's not already
 chart_data['time'] = pd.to_datetime(chart_data['time'])
 
@@ -70,27 +69,27 @@ fig1 = px.line(
 # Display the first chart in Streamlit
 st.plotly_chart(fig1)
 
-# Calculate the metrics for each hour of the day, grouped by day, for the second chart
+# Prepare data for plotting hourly patterns across all days without aggregation
 if metric == "Average":
-    daily_peak_data = chart_data.groupby(['day', 'hour_of_day'])['target_processing_time'].mean().reset_index()
-    daily_peak_data.rename(columns={'target_processing_time': 'value'}, inplace=True)
+    daily_data = chart_data.groupby(['hour_of_day', 'day'])['target_processing_time'].mean().reset_index()
+    daily_data.rename(columns={'target_processing_time': 'value'}, inplace=True)
 elif metric == "Min":
-    daily_peak_data = chart_data.groupby(['day', 'hour_of_day'])['target_processing_time'].min().reset_index()
-    daily_peak_data.rename(columns={'target_processing_time': 'value'}, inplace=True)
+    daily_data = chart_data.groupby(['hour_of_day', 'day'])['target_processing_time'].min().reset_index()
+    daily_data.rename(columns={'target_processing_time': 'value'}, inplace=True)
 elif metric == "Max":
-    daily_peak_data = chart_data.groupby(['day', 'hour_of_day'])['target_processing_time'].max().reset_index()
-    daily_peak_data.rename(columns={'target_processing_time': 'value'}, inplace=True)
+    daily_data = chart_data.groupby(['hour_of_day', 'day'])['target_processing_time'].max().reset_index()
+    daily_data.rename(columns={'target_processing_time': 'value'}, inplace=True)
 elif metric == "90th Percentile":
-    daily_peak_data = chart_data.groupby(['day', 'hour_of_day'])['target_processing_time'].quantile(0.9).reset_index()
-    daily_peak_data.rename(columns={'target_processing_time': 'value'}, inplace=True)
+    daily_data = chart_data.groupby(['hour_of_day', 'day'])['target_processing_time'].quantile(0.9).reset_index()
+    daily_data.rename(columns={'target_processing_time': 'value'}, inplace=True)
 
-# Create a Plotly line chart for the daily peak time with separate lines for each day
+# Create a Plotly line chart for the daily pattern
 fig2 = px.line(
-    daily_peak_data,
+    daily_data,
     x='hour_of_day',
     y='value',
     color='day',  # Use different colors for each day
-    title=f'Aggregated {metric} by Hour of the Day {unit_label}',
+    title=f'{metric} of Target Processing Time by Hour of the Day {unit_label}',
     labels={'hour_of_day': 'Hour of the Day', 'value': f'{metric} Target Processing Time {unit_label}'},
     hover_data={'hour_of_day': ':.0f', 'value': ':,.2f', 'day': '|%Y-%m-%d'}
 )
