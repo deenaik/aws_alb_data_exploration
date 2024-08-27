@@ -87,6 +87,22 @@ fig1 = px.line(
 # Display the first chart in Streamlit
 st.plotly_chart(fig1)
 
+# Calculate the count of requests per hour for the new chart
+hourly_request_count = filtered_data.groupby('hour').size().reset_index(name='request_count')
+
+# Create a Plotly line chart for the request count
+fig3 = px.line(
+    hourly_request_count,
+    x='hour',
+    y='request_count',
+    title='Hourly Request Count',
+    labels={'hour': 'Time', 'request_count': 'Request Count'},
+    hover_data={'hour': '|%Y-%m-%d %H:%M:%S', 'request_count': ':,.0f'}
+)
+
+# Display the request count chart in Streamlit
+st.plotly_chart(fig3)
+
 # Prepare data for plotting hourly patterns across all days without aggregation
 if metric == "Average":
     daily_data = filtered_data.groupby(['hour_of_day', 'day'])['target_processing_time'].mean().reset_index()
@@ -121,3 +137,27 @@ fig2.update_xaxes(
 
 # Display the second chart in Streamlit
 st.plotly_chart(fig2)
+
+# Calculate the count of requests per hour of the day
+hourly_request_day_count = filtered_data.groupby(['hour_of_day', 'day']).size().reset_index(name='request_count')
+
+# Create a Plotly line chart for the request count by hour of the day
+fig4 = px.line(
+    hourly_request_day_count,
+    x='hour_of_day',
+    y='request_count',
+    color='day',  # Use different colors for each day
+    title='Request Count by Hour of the Day Across All Days',
+    labels={'hour_of_day': 'Hour of the Day', 'request_count': 'Request Count'},
+    hover_data={'hour_of_day': ':.0f', 'request_count': ':,.0f', 'day': '|%Y-%m-%d'}
+)
+
+# Update x-axis to show all hours from 0 to 23
+fig4.update_xaxes(
+    tickmode='linear',
+    tickvals=list(range(24)),  # Show ticks for each hour
+    ticktext=[f'{i}:00' for i in range(24)]  # Label ticks with hour in HH:00 format
+)
+
+# Display the request count by hour of the day chart in Streamlit
+st.plotly_chart(fig4)
