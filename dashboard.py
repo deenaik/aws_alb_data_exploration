@@ -23,6 +23,27 @@ chart_data['day'] = chart_data['time'].dt.date  # Add a column for the day
 
 # Sidebar for selecting the time unit
 st.sidebar.header("Settings")
+
+# Text input for filtering domain_name
+domain_filter = st.sidebar.text_input(
+    "Filter Domain(s)",
+    value="",  # Default value is an empty string
+    placeholder="Enter domain to filter"
+)
+
+# Get unique domains
+all_domains = chart_data['domain_name'].unique()
+
+# Filter domains based on the text input
+if domain_filter:
+    filtered_domains = [d for d in all_domains if domain_filter.lower() in d.lower()]
+else:
+    filtered_domains = all_domains
+
+# Filter data based on filtered domains
+filtered_data = chart_data[chart_data['domain_name'].isin(filtered_domains)]
+
+# Sidebar for selecting the time unit
 unit = st.sidebar.radio(
     "Select Time Unit",
     options=["Seconds", "Milliseconds"]
@@ -36,24 +57,24 @@ metric = st.sidebar.selectbox(
 
 # Convert 'target_processing_time' based on selected unit
 if unit == "Milliseconds":
-    chart_data['target_processing_time'] = chart_data['target_processing_time'] * 1000
+    filtered_data['target_processing_time'] = filtered_data['target_processing_time'] * 1000
     unit_label = "(ms)"
 else:
-    chart_data['target_processing_time'] = chart_data['target_processing_time']
+    filtered_data['target_processing_time'] = filtered_data['target_processing_time']
     unit_label = "(s)"
 
 # Calculate the hourly metrics based on the selected option for the first chart
 if metric == "Average":
-    hourly_data = chart_data.groupby('hour')['target_processing_time'].mean().reset_index()
+    hourly_data = filtered_data.groupby('hour')['target_processing_time'].mean().reset_index()
     hourly_data.rename(columns={'target_processing_time': 'value'}, inplace=True)
 elif metric == "Min":
-    hourly_data = chart_data.groupby('hour')['target_processing_time'].min().reset_index()
+    hourly_data = filtered_data.groupby('hour')['target_processing_time'].min().reset_index()
     hourly_data.rename(columns={'target_processing_time': 'value'}, inplace=True)
 elif metric == "Max":
-    hourly_data = chart_data.groupby('hour')['target_processing_time'].max().reset_index()
+    hourly_data = filtered_data.groupby('hour')['target_processing_time'].max().reset_index()
     hourly_data.rename(columns={'target_processing_time': 'value'}, inplace=True)
 elif metric == "90th Percentile":
-    hourly_data = chart_data.groupby('hour')['target_processing_time'].quantile(0.9).reset_index()
+    hourly_data = filtered_data.groupby('hour')['target_processing_time'].quantile(0.9).reset_index()
     hourly_data.rename(columns={'target_processing_time': 'value'}, inplace=True)
 
 # Create a Plotly line chart for the first chart
@@ -71,16 +92,16 @@ st.plotly_chart(fig1)
 
 # Prepare data for plotting hourly patterns across all days without aggregation
 if metric == "Average":
-    daily_data = chart_data.groupby(['hour_of_day', 'day'])['target_processing_time'].mean().reset_index()
+    daily_data = filtered_data.groupby(['hour_of_day', 'day'])['target_processing_time'].mean().reset_index()
     daily_data.rename(columns={'target_processing_time': 'value'}, inplace=True)
 elif metric == "Min":
-    daily_data = chart_data.groupby(['hour_of_day', 'day'])['target_processing_time'].min().reset_index()
+    daily_data = filtered_data.groupby(['hour_of_day', 'day'])['target_processing_time'].min().reset_index()
     daily_data.rename(columns={'target_processing_time': 'value'}, inplace=True)
 elif metric == "Max":
-    daily_data = chart_data.groupby(['hour_of_day', 'day'])['target_processing_time'].max().reset_index()
+    daily_data = filtered_data.groupby(['hour_of_day', 'day'])['target_processing_time'].max().reset_index()
     daily_data.rename(columns={'target_processing_time': 'value'}, inplace=True)
 elif metric == "90th Percentile":
-    daily_data = chart_data.groupby(['hour_of_day', 'day'])['target_processing_time'].quantile(0.9).reset_index()
+    daily_data = filtered_data.groupby(['hour_of_day', 'day'])['target_processing_time'].quantile(0.9).reset_index()
     daily_data.rename(columns={'target_processing_time': 'value'}, inplace=True)
 
 # Create a Plotly line chart for the daily pattern
