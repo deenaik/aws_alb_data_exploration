@@ -24,21 +24,43 @@ chart_data['day'] = chart_data['time'].dt.date  # Add a column for the day
 # Sidebar for selecting the time unit
 st.sidebar.header("Settings")
 
-# Get unique domains
-all_domains = chart_data['domain_name'].unique()
-
 # Auto-complete for domain_name
 domain_filter = st.sidebar.selectbox(
     "Select Domain(s)",
-    options=['All'] + list(all_domains),
+    options=['All'] + list(chart_data['domain_name'].unique()),
     index=0
 )
 
-# Filter domains based on the selected value
+# Text input to include URL patterns
+include_patterns = st.sidebar.text_input(
+    "Include URL Patterns (comma separated)",
+    ""
+).strip()
+
+# Text input to exclude URL patterns
+exclude_patterns = st.sidebar.text_input(
+    "Exclude URL Patterns (comma separated)",
+    ""
+).strip()
+
+# Convert patterns to lists
+include_patterns_list = [pattern.strip() for pattern in include_patterns.split(',') if pattern.strip()]
+exclude_patterns_list = [pattern.strip() for pattern in exclude_patterns.split(',') if pattern.strip()]
+
+# Filter data based on domain
 if domain_filter == 'All':
     filtered_data = chart_data
 else:
     filtered_data = chart_data[chart_data['domain_name'] == domain_filter]
+
+# Filter data based on URL patterns
+if include_patterns_list:
+    filtered_data = filtered_data[filtered_data['request_url'].apply(lambda url: any(pattern in url for pattern in include_patterns_list))]
+
+# Exclude data based on URL patterns
+if exclude_patterns_list:
+    for pattern in exclude_patterns_list:
+        filtered_data = filtered_data[~filtered_data['request_url'].str.contains(pattern, na=False)]
 
 # Sidebar for selecting the time unit
 unit = st.sidebar.radio(
